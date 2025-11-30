@@ -81,8 +81,9 @@ streamlit run app.py
 G-Cartのアルゴリズムは、地域経済の「漏出（Leakage）」を防ぐための経済理論 **SBCM Economics** に基づいています。
 なぜこのシステムが地方創生に必要なのか、その数学的証明はこちらをご覧ください。
 
-👉 **[理論仕様書 (Theory & Logic)](docs/THEORY.md)**
-
+👉 **[理論仕様書 (Theory & Logic)](docs/THEORY.md)**  
+👉️ **[日本語版理論仕様書](https://gist.github.com/Melnus/6c751d5a333d6bb6c1b6cb4a0b7ffa88)**  
+  
 ## 📝 ライセンス
 
 [MIT License](LICENSE)
