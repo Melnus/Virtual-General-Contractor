@@ -1,0 +1,15 @@
+# Security Policy for G-Cart (Virtual General Contractor System)
+
+Contact: mailto:security@g-cart.myao
+Expires: 9999-12-31T23:59:00.000Z
+Preferred-Languages: ja, en
+Encryption: https://g-cart.gov/pgp-key.txt
+
+# 🐛 Bug Bounty Program (バグ報奨金)
+# SBCMアルゴリズムの脆弱性や、不正な中抜き（Leakage）を発見したハッカーには、
+# 削減された税金の10%を報奨金として支払います。
+Policy: https://g-cart.gov/security-policy.html
+
+# ⚠️ Note
+# This system handles public funds.
+# Any attempt to manipulate the 'Block Retention Rate' (R_block) is considered a cybercrime.
