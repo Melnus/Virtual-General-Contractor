@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import time
+import random
+from datetime import datetime, timedelta
 
 # --- 0. アプリ設定 ---
 st.set_page_config(
@@ -10,25 +13,24 @@ st.set_page_config(
 )
 
 # ==========================================
-# ⚙️ 設定エリア: 自分の環境に合わせて書き換えてください
+# ⚙️ 設定エリア
 # ==========================================
 
-# 1. Googleスプレッドシートの「ウェブに公開」したCSV URL
-# ※ テスト用にダミーデータが入ったシートを用意しています。
-SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtWE10eHmfLAKN-RmoNYL1Ypjt0C7XallxW3ilRrqphFloElxE7BPq32SzvNk5T2glaLcsSwcblH6w/pub?gid=0&single=true&output=csv" 
-# (注意: 上記はダミーURLです。自分のURLがない場合は、下部の「ダミーデータ生成」が動きます)
+# 1. Googleスプレッドシート (CSV URL)
+# ※ ダミーデータURLです。自身のURLがあれば差し替えてください。
+SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtWE10eHmfLAKN-RmoNYL1Ypjt0C7XallxW3ilRrqphFloElxE7BPq32SzvNk5T2glaLcsSwcblH6w/pub?gid=0&single=true&output=csv"
 
-# 2. GoogleフォームのURL (パートナー登録用)
-FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeTyYcQSVJIva0DSwU0agP5a-M07atLkcXyvBaKQOqADlKV2A/viewform?usp=sharing&ouid=105061654233557137452"
+# 2. パートナー登録フォーム
+FORM_URL = "https://forms.google.com/example"
 
-# 3. ログイン中のユーザー設定 (あなたの会社)
+# 3. ログイン中のユーザー (あなた)
 MY_COMPANY = {
     "name": "出木杉土木工業 (あなた)",
     "location": "柏市",
-    "capacity": 30000000,  # 現在の施工余力: 3,000万円
+    "capacity": 30000000,
 }
 
-# 4. 公共事業案件リスト (本来は役所APIから取得)
+# 4. 公共事業案件リスト
 PROJECTS = [
     {
         "id": 101,
@@ -60,74 +62,58 @@ PROJECTS = [
 ]
 
 # ==========================================
-# 🛠️ バックエンドロジック (SBCMエンジン)
+# 🛠️ バックエンドロジック
 # ==========================================
 
 @st.cache_data(ttl=60)
 def load_partners():
-    """
-    Googleスプレッドシートからパートナー企業を読み込む
-    エラー時はデモ用のダミーデータを返す
-    """
     try:
         df = pd.read_csv(SHEET_URL)
-        # スプレッドシートのカラム名をアプリ用に統一
-        # ※ フォームの質問項目に合わせて調整してください
         df = df.rename(columns={
-            "会社名": "name",
-            "得意工種": "type",
-            "エリア": "location",
-            "施工余力": "capacity"
+            "会社名": "name", "得意工種": "type", "エリア": "location", "施工余力": "capacity"
         })
         return df.to_dict('records')
     except Exception:
-        # シートがない場合のデモ用データ
+        # デモデータ
         return [
             {"name": "田中舗装ロード", "type": "舗装", "location": "柏市", "capacity": 30000000},
             {"name": "柏警備保障", "type": "警備", "location": "柏市", "capacity": 5000000},
             {"name": "松戸電気サービス", "type": "電気", "location": "松戸市", "capacity": 20000000},
             {"name": "流山水道メンテナンス", "type": "水道", "location": "流山市", "capacity": 15000000},
             {"name": "ちば建設資材", "type": "資材", "location": "柏市", "capacity": 50000000},
-            {"name": "常盤建築", "type": "建築", "location": "柏市", "capacity": 40000000},
         ]
 
-# データをロード
 PARTNERS = load_partners()
 
-# セッション状態の初期化
+# --- セッション状態の初期化 ---
 if 'team' not in st.session_state:
     st.session_state['team'] = []
 if 'team_budget' not in st.session_state:
     st.session_state['team_budget'] = MY_COMPANY['capacity']
+if 'phase' not in st.session_state:
+    st.session_state['phase'] = 'selection'  # selection -> matching -> execution
 
 # ==========================================
 # 📱 フロントエンド (UI)
 # ==========================================
 
-# サイドバー
 with st.sidebar:
     st.header("G-Cart メニュー")
     st.markdown(f"👤 **{MY_COMPANY['name']}**")
     st.markdown(f"💰 余力: ¥{MY_COMPANY['capacity']:,}")
     st.divider()
+    st.link_button("📝 パートナー登録フォーム", FORM_URL)
     
-    st.markdown("### 仲間を増やす")
-    st.markdown("知り合いの社長にこのURLを送ってください")
-    st.link_button("📝 パートナー登録フォームへ", FORM_URL)
-    
-    st.divider()
-    st.info("💡 **SBCM経済学**に基づき、地域内残留率($R_{block}$)が高くなるパートナーを優先表示しています。")
+    if st.session_state['phase'] == 'execution':
+        st.success("🏗️ 現在施工中")
 
-# メイン画面タイトル
 st.title("🛒 G-Cart (Government Cart)")
-st.caption("バーチャル・ゼネコンシステム powered by SBCM")
 
-# --- 画面切り替えロジック ---
-
-if 'selected_project' not in st.session_state:
-    # ----------------------------------
-    # 画面A: 公共事業一覧 (Amazon風)
-    # ----------------------------------
+# ------------------------------------------------------------------
+# 画面1: 公共事業一覧 (Amazon風)
+# ------------------------------------------------------------------
+if st.session_state['phase'] == 'selection':
+    st.caption("バーチャル・ゼネコンシステム powered by SBCM")
     st.subheader("📦 おすすめの公共事業")
     
     cols = st.columns(3)
@@ -137,10 +123,8 @@ if 'selected_project' not in st.session_state:
                 st.markdown(f"## {proj['image']}")
                 st.markdown(f"**{proj['name']}**")
                 st.caption(f"📍 {proj['location']}")
-                
                 st.metric("予算", f"¥{proj['budget']:,}")
                 
-                # キャパ判定
                 shortage = proj['budget'] - MY_COMPANY['capacity']
                 
                 if shortage > 0:
@@ -154,92 +138,156 @@ if 'selected_project' not in st.session_state:
                 
                 if st.button(btn_label, key=f"p_{proj['id']}", type=btn_type):
                     st.session_state['selected_project'] = proj
-                    # チーム状態をリセット
                     st.session_state['team'] = []
                     st.session_state['team_budget'] = MY_COMPANY['capacity']
+                    st.session_state['phase'] = 'matching'
                     st.rerun()
 
-else:
-    # ----------------------------------
-    # 画面B: チームビルディング (Tinder/マッチング風)
-    # ----------------------------------
+# ------------------------------------------------------------------
+# 画面2: チームビルディング (Tinder風)
+# ------------------------------------------------------------------
+elif st.session_state['phase'] == 'matching':
     p = st.session_state['selected_project']
     
-    st.button("← 一覧に戻る", on_click=lambda: st.session_state.pop('selected_project'))
+    if st.button("← 一覧に戻る"):
+        st.session_state['phase'] = 'selection'
+        st.rerun()
+        
     st.markdown("---")
-    
     col_L, col_R = st.columns([1, 1.5])
     
     with col_L:
         st.header(f"{p['image']} {p['name']}")
         st.markdown(f"**予算: ¥{p['budget']:,}**")
         st.markdown(f"**必要工種:** {', '.join(p['tags'])}")
-        
         st.divider()
-        st.subheader("現在のチーム状況")
         
         # プログレスバー
         progress = min(1.0, st.session_state['team_budget'] / p['budget'])
         st.progress(progress)
         st.markdown(f"**総キャパ: ¥{st.session_state['team_budget']:,}** / 必要: ¥{p['budget']:,}")
         
-        # チームメンバー表示
-        st.markdown("#### メンバー")
-        st.text(f"👤 {MY_COMPANY['name']} (Owner)")
+        st.markdown("#### 結成メンバー")
+        st.text(f"👤 {MY_COMPANY['name']} (Leader)")
         for member in st.session_state['team']:
             st.text(f"🤝 {member['name']} ({member['type']})")
 
         if st.session_state['team_budget'] >= p['budget']:
             st.success("🎉 キャパシティクリア！")
-            if st.button("🚀 バーチャルJVとして入札する", type="primary", use_container_width=True):
+            if st.button("🚀 バーチャルJVとして入札確定", type="primary", use_container_width=True):
                 st.balloons()
                 time.sleep(1)
-                st.toast("入札が完了しました！")
-                st.success(f"""
-                **入札完了**
-                スマートコントラクトにより、受注金額は参加企業({len(st.session_state['team'])+1}社)に自動分配されます。
-                - 地域内残留率: 98%
-                - 中抜き: 0円
-                """)
+                
+                # --- 施工スケジュールの自動生成 (モック) ---
+                start_date = datetime.today()
+                schedule_data = []
+                
+                # 自分
+                schedule_data.append({
+                    "Task": "準備工・基礎", "Company": MY_COMPANY['name'],
+                    "Start": start_date, "Finish": start_date + timedelta(days=10),
+                    "Progress": 50, "Status": "作業中"
+                })
+                # パートナー
+                for i, member in enumerate(st.session_state['team']):
+                    start = start_date + timedelta(days=10 + (i*10))
+                    schedule_data.append({
+                        "Task": f"{member['type']}工事", "Company": member['name'],
+                        "Start": start, "Finish": start + timedelta(days=10),
+                        "Progress": 0, "Status": "待機中"
+                    })
+                
+                st.session_state['schedule'] = pd.DataFrame(schedule_data)
+                st.session_state['phase'] = 'execution' # 画面遷移
+                st.rerun()
         else:
             st.warning(f"あと ¥{p['budget'] - st.session_state['team_budget']:,} 足りません")
 
     with col_R:
         st.subheader("🔍 AIパートナーレコメンド")
-        st.info("あなたの不足キャパと工種を補う企業を検索しました")
-        
-        # マッチングロジック
-        recommended_count = 0
-        
         for partner in PARTNERS:
-            # すでにチームにいたらスキップ
-            if partner['name'] in [m['name'] for m in st.session_state['team']]:
-                continue
+            if partner['name'] in [m['name'] for m in st.session_state['team']]: continue
             
-            # 必要な工種を持っているか？
             is_needed = partner['type'] in p['tags']
-            # 近所か？（ストロー効果防止）
-            is_local = p['location'].split("・")[0] in partner['location']
-            
             if is_needed:
-                recommended_count += 1
                 with st.container(border=True):
                     c1, c2, c3 = st.columns([2, 1, 1])
-                    
                     with c1:
                         st.markdown(f"**{partner['name']}**")
                         st.caption(f"🔧 {partner['type']} | 📍 {partner['location']}")
-                        if is_local:
-                            st.caption("✨ 地元企業 (SBCM推奨)")
-                    
-                    with c2:
-                        st.metric("余力", f"¥{partner['capacity']//10000}万")
-                    
+                    with c2: st.metric("余力", f"¥{partner['capacity']//10000}万")
                     with c3:
-                        if st.button("オファー", key=f"add_{partner['name']}"):
+                        if st.button("追加", key=f"add_{partner['name']}"):
                             st.session_state['team'].append(partner)
                             st.session_state['team_budget'] += partner['capacity']
                             st.rerun()
+
+# ------------------------------------------------------------------
+# 画面3: G-Gantt (施工・進捗管理) - NEW!
+# ------------------------------------------------------------------
+elif st.session_state['phase'] == 'execution':
+    p = st.session_state['selected_project']
+    
+    st.title("📅 G-Gantt 現場管理")
+    st.caption(f"案件: {p['name']} | 施工中 JVメンバー: {len(st.session_state['team'])+1}社")
+    
+    # 1. 支払いウォレット表示
+    st.markdown("### 💰 プロジェクト・ウォレット")
+    
+    # モック計算: 進捗率に応じて支払い済み額を計算
+    df_sch = st.session_state['schedule']
+    total_tasks = len(df_sch)
+    total_prog = df_sch["Progress"].sum()
+    paid_amount = int(p['budget'] * (total_prog / (total_tasks * 100)))
+    
+    w1, w2, w3 = st.columns(3)
+    w1.metric("受注総額", f"¥{p['budget']:,}")
+    w2.metric("即時分配済み", f"¥{paid_amount:,}", delta=f"{int(total_prog/total_tasks)}%")
+    w3.metric("プール残高", f"¥{p['budget'] - paid_amount:,}")
+    
+    st.divider()
+
+    # 2. ガントチャート (Plotly)
+    st.subheader("工程表")
+    fig = px.timeline(df_sch, x_start="Start", x_end="Finish", y="Task", color="Status",
+                      color_discrete_map={"完了": "green", "作業中": "orange", "待機中": "gray"},
+                      hover_data=["Company", "Progress"])
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # 3. 作業報告インターフェース
+    st.subheader("📝 作業完了報告 (請求)")
+    
+    with st.container(border=True):
+        col_rep1, col_rep2 = st.columns([2, 1])
         
-        if recommended_count == 0:
-            st.write("条件に合うパートナーが見つかりませんでした。")
+        with col_rep1:
+            # 自分のタスク（今回はOwnerのタスク）を選択
+            my_tasks = df_sch[df_sch["Company"] == MY_COMPANY['name']]
+            target_task = st.selectbox("更新するタスク", my_tasks["Task"])
+            
+            # 現在の進捗を取得
+            curr_val = my_tasks[my_tasks["Task"] == target_task]["Progress"].values[0]
+            new_val = st.slider("進捗率 (%)", 0, 100, int(curr_val))
+            
+        with col_rep2:
+            st.write("## ")
+            if st.button("更新して入金をリクエスト", type="primary"):
+                # データ更新
+                idx = df_sch.index[df_sch["Task"] == target_task].tolist()[0]
+                st.session_state['schedule'].at[idx, "Progress"] = new_val
+                
+                if new_val == 100:
+                    st.session_state['schedule'].at[idx, "Status"] = "完了"
+                    st.balloons()
+                    st.success("✅ 工程完了！ウォレットから送金されました。")
+                elif new_val > 0:
+                    st.session_state['schedule'].at[idx, "Status"] = "作業中"
+                    st.toast("進捗が保存されました")
+                
+                time.sleep(1)
+                st.rerun()
+
+    if st.button("プロジェクト終了 (デモ用リセット)"):
+        st.session_state['phase'] = 'selection'
+        st.rerun()
