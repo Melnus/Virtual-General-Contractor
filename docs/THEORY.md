@@ -72,14 +72,14 @@ graph BT
     B[Subcontractor B]
     C[Subcontractor C]
     end
-    D[General Contractor (Tokyo)]
+    D["General Contractor (Tokyo)"]
     G[Government]
     
-    G -- Budget ($$) --> D
-    D -- Margin ($) --> D
-    D -- Peanuts (¢) --> A
-    D -- Peanuts (¢) --> B
-    D -- Peanuts (¢) --> C
+    G -- "Budget ($$)" --> D
+    D -- "Margin ($)" --> D
+    D -- "Peanuts (¢)" --> A
+    D -- "Peanuts (¢)" --> B
+    D -- "Peanuts (¢)" --> C
 ```
 
 ### G-Cart Model (Network)
