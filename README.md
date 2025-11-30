@@ -74,7 +74,7 @@ streamlit run app.py
 
 | 案件一覧 (Amazon風) | チームビルディング (Tinder風) |
 | :---: | :---: |
-| <img src="docs/screen1.png" width="300"> | <img src="docs/screen2.png" width="300"> |
+| <img src="demo1.png" width="300"> | <img src="demo2.png" width="300"> |
 | *「単独受注不可」を可視化* | *足りないピースを自動マッチング* |
 
 ## 📝 ライセンス
