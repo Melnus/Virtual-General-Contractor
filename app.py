@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # --- 0. アプリ設定 ---
 st.set_page_config(
     page_title="G-Cart | バーチャル・ゼネコン",
-    page_icon="🏗️",
+    page_icon="favicon.png",
     layout="wide"
 )
 
