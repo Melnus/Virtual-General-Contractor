@@ -10,7 +10,6 @@ AmazonのようなECサイト風UIを通じて、地方の中小企業がアル�
 
 ---
 
-**こちらは統合されました。 This has been integrated→[pithos](https://github.com/SBCM-Alliance/pithos)**
 
 ## 📖 概要 (Overview)
 
