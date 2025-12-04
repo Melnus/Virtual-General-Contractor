@@ -10,6 +10,8 @@ AmazonのようなECサイト風UIを通じて、地方の中小企業がアル�
 
 ---
 
+**こちらは統合されました。 This has been integrated→[pithos](https://github.com/SBCM-Alliance/pithos)**
+
 ## 📖 概要 (Overview)
 
 従来の公共事業は、巨大な「ゼネコン（総合建設業）」を頂点とするピラミッド構造でした。
