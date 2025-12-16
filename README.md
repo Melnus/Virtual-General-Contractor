@@ -1,6 +1,7 @@
 # G-Cart: The Virtual General Contractor System
 ### 🏗️ Democratizing Public Procurement via Algorithms
 
+
 [![SBCM Economics](https://img.shields.io/badge/Theory-SBCM_Economics-blue)](https://doi.org/10.5281/zenodo.17766604)
 [![Python](https://img.shields.io/badge/Built_with-Streamlit-red)](https://streamlit.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,7 +10,6 @@
 AmazonのようなECサイト風UIを通じて、地方の中小企業がアルゴリズムで瞬時に連携（JV）し、巨大な公共事業を直接受注することを可能にします。
 
 ---
-
 
 ## 📖 概要 (Overview)
 

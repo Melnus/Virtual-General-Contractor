@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # --- 0. アプリ設定 ---
 st.set_page_config(
     page_title="G-Cart | バーチャル・ゼネコン",
-    page_icon="favicon.png",
+    page_icon="🏗️",
     layout="wide"
 )
 
@@ -17,10 +17,11 @@ st.set_page_config(
 # ==========================================
 
 # 1. Googleスプレッドシート (CSV URL)
+# ※ ダミーデータURLです。自身のURLがあれば差し替えてください。
 SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtWE10eHmfLAKN-RmoNYL1Ypjt0C7XallxW3ilRrqphFloElxE7BPq32SzvNk5T2glaLcsSwcblH6w/pub?gid=0&single=true&output=csv"
 
 # 2. パートナー登録フォーム
-FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeTyYcQSVJIva0DSwU0agP5a-M07atLkcXyvBaKQOqADlKV2A/viewform?usp=dialog"
+FORM_URL = "https://forms.google.com/example"
 
 # 3. ログイン中のユーザー (あなた)
 MY_COMPANY = {
